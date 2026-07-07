@@ -6,10 +6,10 @@ export default function ThankYouPage() {
       <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70">
         <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#b88600]">Inspection Request Received</p>
         <h1 className="mt-4 text-3xl font-semibold text-slate-950">
-          Thank you. We received your inspection request.
+          Thank you! Your request has been received.
         </h1>
         <p className="mt-5 text-lg leading-8 text-slate-600">
-          Our team will contact you shortly to confirm availability and finalize scheduling.
+          A member of our team will contact you shortly to confirm your inspection.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link

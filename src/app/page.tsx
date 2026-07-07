@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
@@ -340,11 +341,13 @@ const localBusinessSchema = {
 
 function Field({
   label,
+  name,
   type = "text",
   wide = false,
   required = true,
 }: {
   label: string;
+  name: string;
   type?: string;
   wide?: boolean;
   required?: boolean;
@@ -355,7 +358,7 @@ function Field({
         {label}
         {required ? <em>Required</em> : <em>Optional</em>}
       </span>
-      <input type={type} required={required} />
+      <input name={name} type={type} required={required} />
     </label>
   );
 }
@@ -385,7 +388,9 @@ function InspectionAccordion({
 }
 
 export default function Home() {
-  const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [activeReview, setActiveReview] = useState(0);
 
   useEffect(() => {
@@ -396,9 +401,54 @@ export default function Home() {
     return () => window.clearInterval(interval);
   }, []);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitted(true);
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const searchParams = new URLSearchParams(window.location.search);
+    const trackingKeys = [
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_content",
+      "utm_term",
+      "fbclid",
+      "gclid",
+    ];
+
+    trackingKeys.forEach((key) => {
+      const value = searchParams.get(key);
+
+      if (value) {
+        formData.set(key, value);
+      }
+    });
+
+    formData.set("pageUrl", window.location.href);
+
+    try {
+      const response = await fetch("/api/inspection-request", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(result?.error || "We could not submit your request.");
+      }
+
+      router.push("/thank-you");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again or call us directly.",
+      );
+      setIsSubmitting(false);
+    }
   };
 
   const currentReview = reviews[activeReview];
@@ -461,50 +511,42 @@ export default function Home() {
                 <h2 id="form-title">Get On The Schedule.</h2>
               </div>
 
-              {submitted ? (
-                <div className="success-message">
-                  <strong>Thank you!</strong>
-                  <span>
-                    Your request has been received. A member of our team will contact you shortly to confirm your inspection.
-                  </span>
+              <form onSubmit={handleSubmit}>
+                <div className="form-grid">
+                  <Field label="First Name" name="firstName" />
+                  <Field label="Last Name" name="lastName" />
+                  <Field label="Phone" name="phone" type="tel" />
+                  <Field label="Email" name="email" type="email" />
+                  <Field label="Property Address" name="propertyAddress" wide />
+                  <Field label="Preferred Inspection Date" name="preferredInspectionDate" type="date" required={false} />
+                  <label className="field">
+                    <span>
+                      Buyer / Seller / Agent / Investor
+                      <em>Optional</em>
+                    </span>
+                    <select name="leadType" defaultValue="">
+                      <option value="" disabled>
+                        Select one
+                      </option>
+                      <option>Buyer</option>
+                      <option>Seller</option>
+                      <option>Agent</option>
+                      <option>Investor</option>
+                    </select>
+                  </label>
+                  <label className="field field-wide">
+                    <span>
+                      Message
+                      <em>Optional</em>
+                    </span>
+                    <textarea name="message" rows={3} />
+                  </label>
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  <div className="form-grid">
-                    <Field label="First Name" />
-                    <Field label="Last Name" />
-                    <Field label="Phone" type="tel" />
-                    <Field label="Email" type="email" />
-                    <Field label="Property Address" wide />
-                    <Field label="Preferred Inspection Date" type="date" required={false} />
-                    <label className="field">
-                      <span>
-                        Buyer / Seller / Agent / Investor
-                        <em>Optional</em>
-                      </span>
-                      <select defaultValue="">
-                        <option value="" disabled>
-                          Select one
-                        </option>
-                        <option>Buyer</option>
-                        <option>Seller</option>
-                        <option>Agent</option>
-                        <option>Investor</option>
-                      </select>
-                    </label>
-                    <label className="field field-wide">
-                      <span>
-                        Message
-                        <em>Optional</em>
-                      </span>
-                      <textarea rows={3} />
-                    </label>
-                  </div>
-                  <button className="button button-primary button-full" type="submit">
-                    Request My Inspection
-                  </button>
-                </form>
-              )}
+                {submitError ? <p className="form-error">{submitError}</p> : null}
+                <button className="button button-primary button-full" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Request My Inspection"}
+                </button>
+              </form>
               <div className="form-trust-row" aria-label="Trust proof">
                 {formTrustItems.map((item) => (
                   <span key={item}>{item}</span>
