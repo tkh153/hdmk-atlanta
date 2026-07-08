@@ -5,6 +5,16 @@ import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 
+declare global {
+  interface Window {
+    fbq?: (
+      method: "track" | "init",
+      eventName: string,
+      parameters?: Record<string, string | number | boolean>,
+    ) => void;
+  }
+}
+
 const heroBullets = [
   "140+ Five-Star Google Reviews",
   "Same-Day Digital Reports",
@@ -439,6 +449,11 @@ export default function Home() {
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
         throw new Error(result?.error || "We could not submit your request.");
       }
+
+      window.fbq?.("track", "Lead", {
+        content_name: "Inspection Request",
+        content_category: "Home Inspection",
+      });
 
       router.push("/thank-you");
     } catch (error) {

@@ -45,12 +45,19 @@ function getEnv() {
   const token =
     process.env.GHL_PRIVATE_INTEGRATION_TOKEN ||
     process.env.GOHIGHLEVEL_PRIVATE_INTEGRATION_TOKEN ||
-    process.env.HIGHLEVEL_API_KEY;
+    process.env.HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN ||
+    process.env.HIGHLEVEL_API_KEY ||
+    process.env.GHL_API_KEY ||
+    process.env.GOHIGHLEVEL_API_KEY ||
+    process.env.PRIVATE_INTEGRATION_TOKEN ||
+    process.env.API_KEY;
 
   const locationId =
     process.env.GHL_LOCATION_ID ||
     process.env.GOHIGHLEVEL_LOCATION_ID ||
-    process.env.HIGHLEVEL_LOCATION_ID;
+    process.env.HIGHLEVEL_LOCATION_ID ||
+    process.env.LOCATION_ID ||
+    process.env.SUB_ACCOUNT_ID;
 
   return {
     token,
@@ -122,6 +129,14 @@ function validateLead(lead: InspectionRequest) {
   return "";
 }
 
+function formatSubmittedAt() {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "long",
+    timeStyle: "short",
+    timeZone: "America/New_York",
+  }).format(new Date());
+}
+
 function buildLeadNote(lead: InspectionRequest) {
   const trackingText = Object.entries(lead.tracking)
     .map(([key, value]) => `${key}: ${value}`)
@@ -130,6 +145,7 @@ function buildLeadNote(lead: InspectionRequest) {
   return [
     "New inspection request from HDMK Atlanta landing page.",
     "",
+    `Submitted At: ${formatSubmittedAt()} Eastern`,
     `Property Address: ${lead.propertyAddress}`,
     `Preferred Inspection Date: ${lead.preferredInspectionDate || "Not provided"}`,
     `Lead Type: ${lead.leadType || "Not provided"}`,
@@ -317,6 +333,16 @@ async function createOpportunity(
     token,
     version,
   );
+}
+
+export async function GET() {
+  const { token, locationId } = getEnv();
+
+  return NextResponse.json({
+    ok: Boolean(token && locationId),
+    hasPrivateIntegrationToken: Boolean(token),
+    hasLocationId: Boolean(locationId),
+  });
 }
 
 export async function POST(request: NextRequest) {
