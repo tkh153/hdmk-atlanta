@@ -12,6 +12,11 @@ declare global {
       eventName: string,
       parameters?: Record<string, string | number | boolean>,
     ) => void;
+    gtag?: (
+      command: "event",
+      eventName: string,
+      parameters?: Record<string, string | number | boolean>,
+    ) => void;
   }
 }
 
@@ -453,6 +458,10 @@ export default function Home() {
       window.fbq?.("track", "Lead", {
         content_name: "Inspection Request",
         content_category: "Home Inspection",
+      });
+      window.gtag?.("event", "generate_lead", {
+        event_category: "Form",
+        event_label: "Inspection Request",
       });
 
       router.push("/thank-you");

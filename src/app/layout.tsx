@@ -43,6 +43,18 @@ export default function RootLayout({
             fbq('track', 'PageView');
           `}
         </Script>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-5F56YBX51W"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-5F56YBX51W');
+          `}
+        </Script>
         {children}
         <noscript>
           {/* eslint-disable-next-line @next/next/no-img-element */}
